@@ -7,7 +7,11 @@
 """
 __author__ = 'Sergej Schumilo'
 
-from scapy.all import *
+
+from scapy.fields import *
+from scapy.packet import *
+
+
 
 #####################################
 ####### SCAPY EXTENSION STUFF #######
@@ -83,16 +87,16 @@ usbredir_caps_enum = {
 # DO NOT FUZZ THE FOLLOWING REDIR SPECIFIC PACKAGES! FUZZING WILL CAUSE IN QEMU CRASH!
 class usbredirheader(Packet):
     name = "UsbredirPacket"
-    fields_desc = [LEIntEnumField("Htype", -1, usbredir_type_enum),
+    fields_desc = [LEIntEnumField("Htype", 0, usbredir_type_enum),
                    LEIntField("HLength", 0),
-                   LEIntField("Hid", -1)]
+                   LEIntField("Hid", 0)]
 
 
 # Redir Packet No. 0 (redir hello)
 class hello_redir_header(Packet):
     name = "Hello_Packet"
     fields_desc = [
-                     StrLenField("version", "", length_from=64),
+                     StrFixedLenField("version", "", 64),
                      LEIntField("capabilites", 1)
                   ]
 
@@ -184,6 +188,9 @@ redir_specific_type = {
                        102: data_iso_redir_header,
                        103: data_interrupt_redir_header
                       }
+
+for redir_type_id, redir_control_pkg in redir_specific_type.iteritems():
+  bind_layers( usbredirheader, redir_control_pkg, Htype = redir_type_id)
 
 ##################################
 ####### USB SPECIFIC STUFF #######
@@ -475,14 +482,28 @@ SCSI_COMMAND_LIST = [   ['\x04', "FORMAT UNIT", None],
                                                 ['\xaa', "WRITE (12)", None]
                                 ]
 
+PROTO_IDS = {
+    19: 'my_proto',
+    # define all other proto ids
+}
+from scapy.layers.inet import *
+class BaseProto(Packet):
+    name = "BaseProto"
+    fields_desc = [ # other fields omitted...
+                    FieldLenField("len", 10, length_of="data", adjust = lambda pkt,x:x+6),
+                    IntEnumField("protoId", 19, PROTO_IDS),
+                    #StrLenField("data", "", length_from=lambda pkt: pkt.len-6), #<-- will be the next layer, extra data will show up as Raw or PADD
+                   ]
 
 def main():
     # my code here
-  blah = usbredirheader() / hello_redir_header()
-  blah.show()
 
-  print str(blah)
-#  usbredirheader(str(blah)).show()
+  yo = hello_redir_header(version = "aaaaaaaaaaaaaa")
+  bo = usbredirheader()
+  blah = bo / yo
+  blah.show()
+  p = usbredirheader(str(blah))
+  p.show()
 
 if __name__ == "__main__":
     main()
