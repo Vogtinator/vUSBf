@@ -105,6 +105,10 @@ class hello_redir_header(Packet):
                      LEIntField("capabilites", 1)
                   ]
 
+    def print_capabilities(self):
+     for cap, capability_name in usbredir_caps_enum:
+       if self.capabilities & (1 << (cap % 32)) > 0:
+         print "Has capability: "  + capability_name
 
 class hello_redir_header_host(Packet):
     name = "Hello_Packet_Host"
