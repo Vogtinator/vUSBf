@@ -1,4 +1,5 @@
 from usbscapy import *
+from usbEmulator import usb_emulator
 
 interface = USBInterfaceDescriptor(
         bInterfaceNumber       = 0,
@@ -25,3 +26,8 @@ usbdev = USBDeviceDescriptor(
         )
 
 usbdev.show()
+
+
+emu = usb_emulator(["127.0.0.1", "1235"], 0)
+emu.setup_payload(usbdev)
+emu.execute()
