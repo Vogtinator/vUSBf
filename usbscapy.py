@@ -341,6 +341,13 @@ descriptor_types = { 0x01: usb_device_descriptor,
                         }
 
 
+
+bind_layers(data_control_redir_header, usb_generic_descriptor_header, Htype = 100)
+
+for descriptor_num, descriptor_t in descriptor_types.iteritems():
+  bind_layers(usb_generic_descriptor_header, descriptor_t, \
+                   bDescriptorType = descriptor_num)
+
 ## PROTOTYPE FOR USB_HUB_DESCRIPTOR ##
 ##
 ## typedef struct _USB_HUB_DESCRIPTOR {
