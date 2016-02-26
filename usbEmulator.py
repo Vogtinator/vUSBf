@@ -8,7 +8,7 @@
 __author__ = 'Sergej Schumilo'
 
 from usbparser import *
-from fileParser import *
+from lsusb_descriptor_parser import *
 from emulator.enumeration_abortion import abortion_enumeration
 from emulator.enumeration import enumeration
 from emulator.hid import hid
@@ -55,7 +55,7 @@ class usb_emulator:
 
     def setup_payload(self, payload):
 
-        data = usbdescFileParser(config.DEV_DESC_FOLDER + payload.get_option("descriptor")).parse()
+        data = lsusbDescParser(config.DEV_DESC_FOLDER + payload.get_option("descriptor")).parse()
         self.payload = data[0]
         self.if_info_packet = data[3]
         self.ep_info_packet = data[4]

@@ -8,7 +8,10 @@
 
 from usbscapy import *
 
-class usbdescFileParser:
+class lsusbDescriptionParser:
+    """
+    This class is meant to parse the output of lsusb and turn it into scapy packets that can be replicated
+    """
     descriptor_types = ["Device Descriptor:",
                         "Configuration Descriptor:",
                         "Interface Descriptor:",

@@ -7,7 +7,7 @@
 """
 __author__ = 'Sergej Schumilo'
 
-from fileParser import *
+from lsusb_descriptor_parser import *
 import signal
 import os
 
