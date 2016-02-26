@@ -60,6 +60,26 @@ usbredir_type_enum = {  # CONTROL PACKETS
                         102: "data_iso_packet",
                         103: "data_interrupt_packet"}
 
+
+usbredir_caps_enum = {
+    # Supports USB 3 bulk streams
+    0: "usb_redir_cap_bulk_streams",
+    # The device_connect packet has the device_version_bcd field
+    1: "usb_redir_cap_connect_device_version",
+    # Supports usb_redir_filter_reject and usb_redir_filter_filter pkts
+    2: "usb_redir_cap_filter",
+    # Supports the usb_redir_device_disconnect_ack packet
+    3: "usb_redir_cap_device_disconnect_ack",
+    # The ep_info packet has the max_packet_size field
+    4: "usb_redir_cap_ep_info_max_packet_size",
+    # Supports 64 bits ids in usb_redir_header
+    5: "usb_redir_cap_64bits_ids",
+    # Supports 32 bits length in usb_redir_bulk_packet_header
+    6: "usb_redir_cap_32bits_bulk_length",
+    # Supports bulk receiving / buffered bulk input
+    7: "usb_redir_cap_bulk_receiving",
+};
+
 # DO NOT FUZZ THE FOLLOWING REDIR SPECIFIC PACKAGES! FUZZING WILL CAUSE IN QEMU CRASH!
 class usbredirheader(Packet):
     name = "UsbredirPacket"
@@ -71,8 +91,10 @@ class usbredirheader(Packet):
 # Redir Packet No. 0 (redir hello)
 class hello_redir_header(Packet):
     name = "Hello_Packet"
-    fields_desc = [StrLenField("version", "", length_from=64),  # StrLenField("caps", "", length_from=4)]
-                   LEIntField("capabilites", 1)]
+    fields_desc = [
+                     StrLenField("version", "", length_from=64),
+                     LEIntField("capabilites", 1)
+                  ]
 
 
 class hello_redir_header_host(Packet):
@@ -152,14 +174,16 @@ class data_interrupt_redir_header(Packet):
                    ByteField("status", 0),
                    LEShortField("length", 0)]
 
-
-redir_specific_type = [[0, hello_redir_header],
-                       [1, connect_redir_header],
-                       [100, data_control_redir_header],
-                       [101, data_bulk_redir_header],
-                       [102, data_iso_redir_header],
-                       [103, data_interrupt_redir_header]]
-
+redir_specific_type = {
+                       0: hello_redir_header,
+                       1: connect_redir_header,
+                       4: if_info_redir_header,
+                       5:  ep_info_redir_header,
+                       100: data_control_redir_header,
+                       101: data_bulk_redir_header,
+                       102: data_iso_redir_header,
+                       103: data_interrupt_redir_header
+                      }
 
 ##################################
 ####### USB SPECIFIC STUFF #######
@@ -305,13 +329,13 @@ descriptor_types = { 0x01: usb_device_descriptor,
 			0x02: usb_configuration_descriptor,
 			0x03: usb_string_descriptor,
 			0x04: usb_interface_descriptor,
-			0x05: usb_endpoint_descriptor,		
+			0x05: usb_endpoint_descriptor,
 			0x09: usb_hid_descriptor
 			}
-			
+
 
 ## PROTOTYPE FOR USB_HUB_DESCRIPTOR ##
-## 
+##
 ## typedef struct _USB_HUB_DESCRIPTOR {
 ##  UCHAR  bDescriptorLength;
 ##  UCHAR  bDescriptorType;
@@ -326,7 +350,7 @@ descriptor_types = { 0x01: usb_device_descriptor,
 
 ##############################################
 ####### USB MASSSTORAGE SPECIFIC STUFF #######
-###### 	SCSI			       ####### 
+###### 	SCSI			       #######
 ##############################################
 
 # dCBWSignatur
@@ -349,7 +373,7 @@ class massstorage_cbw(Packet):
 				ByteField("bmCBWFlags", None),
 				ByteField("bCBWLUN", None),
 				ByteField("bCBWCBLength", None)
-				]  
+				]
 
 # Command Status Wrapper (CSW)
 class massstorage_csw(Packet):
@@ -373,7 +397,7 @@ SCSI_INQUIRY_PRODUCT_REVISION_LEVEL_LENGTH = 4
 class scsi_inquiry(Packet):
 		name = "SCSI_Inquiry"
 		fields_desc = [	ByteField("peripheral", None),
-				ByteField("RMB", None), 
+				ByteField("RMB", None),
 				ByteField("version", None),
 				ByteField("?", None),
 				ByteField("additional_length", None),
@@ -417,7 +441,7 @@ class scsi_read_capicity(Packet):
 		fields_desc = [ XLEIntField("returned_logic_block_addr", None),
 						XLEIntField("block_length", None) ]
 
-# MODE SELECT (6) SCSI RESPONSE 
+# MODE SELECT (6) SCSI RESPONSE
 class scsi_mode_6(Packet):
 		name = "SCSI_MODE_SELECT_(6)_RESPONSE"
 		fields_desc = [	ByteField("mode_data_length", None),

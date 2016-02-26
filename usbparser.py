@@ -81,13 +81,12 @@ class usbredir_parser(parser):
             return header_layer
 
         specific_layer = None
-        for layer in redir_specific_type:
-            if Htype == layer[0]:
-                try:
-                    specific_layer = layer[1](raw[12:HLength+12])
-                except:
-                    pass
-                break
+
+        if Htype in redir_specific_type:
+          try:
+            specific_layer = redir_specific_type[Htype](raw[12:HLength+12])
+          except:
+            pass
 
         # UNKOWN SPECIFIC REDIR HEADER
         if specific_layer == None:
