@@ -8,10 +8,6 @@
 """
 __author__ = 'Sergej Schumilo'
 
-# suppress scapy ipv6 warning
-import logging
-logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
-
 import sys
 import os
 import config
