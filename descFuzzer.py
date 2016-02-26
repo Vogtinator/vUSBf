@@ -69,7 +69,7 @@ def add_new_descriptor_to_interface(descriptor, configuration_num, interface_num
     if new_descriptor == None:
         return False
 
-    if not (type(new_descriptor) == usb_endpoint_descriptor or type(new_descriptor) == usb_hid_descriptor):
+    if not (type(new_descriptor) == USBEndpointDescriptor or type(new_descriptor) == USBHidDescriptor):
         return False
 
     interface_descriptor = get_interface_descriptor(descriptor, configuration_num, interface_num)
@@ -85,7 +85,7 @@ def add_new_descriptor_to_interface(descriptor, configuration_num, interface_num
     if interface_descriptor[0].bNumEndpoints == None:
         interface_descriptor[0] = 0
 
-    if type(new_descriptor) == usb_endpoint_descriptor:
+    if type(new_descriptor) == USBEndpointDescriptor:
         interface_descriptor[0].bNumEndpoints += 1
 
     interface_descriptor[1].append(new_descriptor)
@@ -98,7 +98,7 @@ def add_new_interface_to_configuration(descriptor, configuration_num, new_interf
     if new_interface == None:
         return False
 
-    if not type(new_interface) == usb_interface_descriptor:
+    if not type(new_interface) == USBInterfaceDescriptor:
         return False
 
     configuration_descriptor = get_configuration_descriptor(descriptor, configuration_num)
@@ -128,7 +128,7 @@ def add_new_configuration_to_device_descriptor(descriptor, new_configuration):
     if new_configuration == None:
         return False
 
-    if not type(new_configuration) == usb_configuration_descriptor:
+    if not type(new_configuration) == USBConfigurationDescriptor:
         return False
 
     if descriptor == None:

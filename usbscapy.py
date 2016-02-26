@@ -223,8 +223,8 @@ class usb_generic_descriptor_header(Packet):
 
 
 # USB Device Descriptor Packet (DescriptorType 0x01)
-class usb_device_descriptor(Packet):
-    name = "USB_Device_Descriptor"
+class USBDeviceDescriptor(Packet):
+    name = "USBDeviceDescriptor"
     fields_desc = [ByteField("bLength", 18),
                    XByteField("bDescriptorType", 0x01),
                    XLEShortField("bcdUSB", 0x0),
@@ -242,9 +242,10 @@ class usb_device_descriptor(Packet):
 
 
 # USB Configuration Descriptor
-class usb_configuration_descriptor(Packet):
-    name = "USB_Configuration_Descriptor"
-    fields_desc = [ByteField("bLength", 9),  # Size of Descriptor in Bytes
+class USBConfigurationDescriptor(Packet):
+    name = "USBConfigurationDescriptor"
+    fields_desc = [
+                   ByteField("bLength", 9),  # Size of Descriptor in Bytes
                    XByteField("bDescriptorType", 0x02),  # Configuration Descriptor (0x02)
                    XLEShortField("wTotalLength", 0),  # Total length in bytes of data returned
                    ByteField("bNumInterfaces", None),  # Number of Interfaces
@@ -265,8 +266,8 @@ class usb_configuration_descriptor(Packet):
 
 
 # USB Interface_Descriptor
-class usb_interface_descriptor(Packet):
-    name = "USB_Interface_Descriptor"
+class USBInterfaceDescriptor(Packet):
+    name = "USBInterfaceDescriptor"
     fields_desc = [ByteField("bLength", 9),  # Size of Descriptor in Bytes (9 Bytes)
                    XByteField("bDescriptorType", 0x04),  # Configuration Descriptor (0x04)
                    ByteField("bInterfaceNumber", None),  # Number of Interface
@@ -280,8 +281,8 @@ class usb_interface_descriptor(Packet):
 
 
 # USB Endpoint Descriptors
-class usb_endpoint_descriptor(Packet):
-    name = "USB_Endpoint_Descriptor"
+class USBEndpointDescriptor(Packet):
+    name = "USBEndpointDescriptor"
     fields_desc = [ByteField("bLength", 7),  # Size of Descriptor in Bytes (7 Bytes)
                    XByteField("bDescriptorType", 0x05),  # Configuration Descriptor (0x05)
                    XByteField("bEndpointAddress", None),  # Endpoint Adress TODO!
@@ -292,24 +293,24 @@ class usb_endpoint_descriptor(Packet):
     ]
 
 
-class usb_string_descriptor_langid(Packet):
-    name = "USB_String_Descriptor_LangID"
+class USBStringDescriptor_langid(Packet):
+    name = "USBStringDescriptor_LangID"
     fields_desc = [ByteField("bLength", 0),
                    ByteField("bDescriptorType", 0),
                    FieldListField("wLANGID", 0x00, XLEShortField("Value", 1), count_from=lambda p: p.bLength)
     ]
 
 
-class usb_string_descriptor(Packet):
-    name = "USB_String_Descriptor"
+class USBStringDescriptor(Packet):
+    name = "USBStringDescriptor"
     fields_desc = [ByteField("bLength", 0),
                    ByteField("bDescriptorType", 0),
                    FieldListField("UnicodeData", 0x00, XLEShortField("Char", 1), count_from=lambda p: p.bLength)
     ]
 
 
-class usb_hid_descriptor(Packet):
-    name = "USB_HID_Descriptor"
+class USBHidDescriptor(Packet):
+    name = "USBHidDescriptor"
     fields_desc = [ByteField("bLength", 0x9),
                    ByteField("bDescriptorType", 0x21),
                    XLEShortField("bcdHID", 0x0),
@@ -332,12 +333,12 @@ class usb_hid_report_descriptor(Packet):
     fields_desc = []
 
 
-descriptor_types = { 0x01: usb_device_descriptor,
-                        0x02: usb_configuration_descriptor,
-                        0x03: usb_string_descriptor,
-                        0x04: usb_interface_descriptor,
-                        0x05: usb_endpoint_descriptor,
-                        0x09: usb_hid_descriptor
+descriptor_types = { 0x01: USBDeviceDescriptor,
+                        0x02: USBConfigurationDescriptor,
+                        0x03: USBStringDescriptor,
+                        0x04: USBInterfaceDescriptor,
+                        0x05: USBEndpointDescriptor,
+                        0x09: USBHidDescriptor
                         }
 
 

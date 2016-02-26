@@ -76,7 +76,7 @@ class enumeration(emulator):
             if descriptor_num < len(self.string_descriptor) + 1:
                 extra_payload = self.string_descriptor[descriptor_num - 1]
             else:
-                extra_payload = usb_string_descriptor('\x04\x03\x09\04')
+                extra_payload = USBStringDescriptor('\x04\x03\x09\04')
             packet_length = len(str(extra_payload))
             #extra_payload.show()
 
