@@ -114,7 +114,7 @@ class connect_redir_header(Packet):
                    XLEShortField("device_version_bcd", 0)]
 
 
-# Redir Packet No. 4 (interface info)	[SIZE 132 BYTES]
+# Redir Packet No. 4 (interface info)   [SIZE 132 BYTES]
 class if_info_redir_header(Packet):
     name = "Interface Info Packet"
     fields_desc = [LEIntField("interface_count", None),
@@ -124,7 +124,7 @@ class if_info_redir_header(Packet):
                    FieldListField("interface_protocol", None, ByteField("Value", 0), length_from=lambda p: 32)]
 
 
-# Redir Packet No. 5 (endpoint info)	[SIZE 160 BYTES]
+# Redir Packet No. 5 (endpoint info)    [SIZE 160 BYTES]
 class ep_info_redir_header(Packet):
     name = "Endpoint Info Packet"
     fields_desc = [FieldListField("ep_type", None, ByteEnumField("type_value", 0, {0: "type_control",
@@ -137,7 +137,7 @@ class ep_info_redir_header(Packet):
                    FieldListField("max_packet_size", None, XLEShortField("Value", 0), length_from=lambda p: 32 * 2)]
 
 
-# Redir Packet No. 100 (data control) 	[SIZE 10 BYTES]
+# Redir Packet No. 100 (data control)   [SIZE 10 BYTES]
 class data_control_redir_header(Packet):
     name = "Data_Control_Packet"
     fields_desc = [ByteField("endpoint", 0),
@@ -149,7 +149,7 @@ class data_control_redir_header(Packet):
                    LEShortField("length", 0)]
 
 
-# Redir Packet No. 101 (data bulk)	[SIZE 8 BYTES]
+# Redir Packet No. 101 (data bulk)      [SIZE 8 BYTES]
 class data_bulk_redir_header(Packet):
     name = "Data_Bulk_Packet"
     fields_desc = [ByteField("endpoint", 0),
@@ -159,7 +159,7 @@ class data_bulk_redir_header(Packet):
                    LEShortField("length_high", None)]
 
 
-# Redir Packet No. 102 (data iso)	[SIZE 4 BYTES]
+# Redir Packet No. 102 (data iso)       [SIZE 4 BYTES]
 class data_iso_redir_header(Packet):
     name = "Data_Iso_Packet"
     fields_desc = [ByteField("endpoint", 0),
@@ -167,7 +167,7 @@ class data_iso_redir_header(Packet):
                    LEShortField("length", 0)]
 
 
-# Redir Packet No. 103 (data interrupt)	[SIZE 4 BYTES]
+# Redir Packet No. 103 (data interrupt) [SIZE 4 BYTES]
 class data_interrupt_redir_header(Packet):
     name = "Data_Interrupt_Packet"
     fields_desc = [ByteField("endpoint", 0),
@@ -326,12 +326,12 @@ class usb_hid_report_descriptor(Packet):
 
 
 descriptor_types = { 0x01: usb_device_descriptor,
-			0x02: usb_configuration_descriptor,
-			0x03: usb_string_descriptor,
-			0x04: usb_interface_descriptor,
-			0x05: usb_endpoint_descriptor,
-			0x09: usb_hid_descriptor
-			}
+                        0x02: usb_configuration_descriptor,
+                        0x03: usb_string_descriptor,
+                        0x04: usb_interface_descriptor,
+                        0x05: usb_endpoint_descriptor,
+                        0x09: usb_hid_descriptor
+                        }
 
 
 ## PROTOTYPE FOR USB_HUB_DESCRIPTOR ##
@@ -350,7 +350,7 @@ descriptor_types = { 0x01: usb_device_descriptor,
 
 ##############################################
 ####### USB MASSSTORAGE SPECIFIC STUFF #######
-###### 	SCSI			       #######
+######  SCSI                           #######
 ##############################################
 
 # dCBWSignatur
@@ -361,28 +361,28 @@ dCSWSignature_magic_number = 0x53425355
 
 # Command Generic Header
 class massstorage_generic(Packet):
-		name = "Massstorage_Generic"
-		fields_desc = [	XLEIntField("dSignature", 0)]
+                name = "Massstorage_Generic"
+                fields_desc = [ XLEIntField("dSignature", 0)]
 
-# Command Block Wrapper  (CBW)		[SIZE: 12 Bytes]
+# Command Block Wrapper  (CBW)          [SIZE: 12 Bytes]
 class massstorage_cbw(Packet):
-				name = "Massstorage_CBW"
-				fields_desc = [ XLEIntField("dCBWSignature", 0),
-				IntField("dCBWTag", None),
-				XLEIntField("dCBWDataTransferLength", None),
-				ByteField("bmCBWFlags", None),
-				ByteField("bCBWLUN", None),
-				ByteField("bCBWCBLength", None)
-				]
+                                name = "Massstorage_CBW"
+                                fields_desc = [ XLEIntField("dCBWSignature", 0),
+                                IntField("dCBWTag", None),
+                                XLEIntField("dCBWDataTransferLength", None),
+                                ByteField("bmCBWFlags", None),
+                                ByteField("bCBWLUN", None),
+                                ByteField("bCBWCBLength", None)
+                                ]
 
 # Command Status Wrapper (CSW)
 class massstorage_csw(Packet):
-		name = "Massstorage_CSW"
-		fields_desc = [	XLEIntField("dCSWSignature", 0),
-				IntField("dCSWTag", None),
-				XLEIntField("dCSWDataResidue", None),
-								ByteField("bCSWStatus", None)
-				]
+                name = "Massstorage_CSW"
+                fields_desc = [ XLEIntField("dCSWSignature", 0),
+                                IntField("dCSWTag", None),
+                                XLEIntField("dCSWDataResidue", None),
+                                                                ByteField("bCSWStatus", None)
+                                ]
 
 ###################################
 ####### SCSI SPECIFIC STUFF #######
@@ -395,83 +395,95 @@ SCSI_INQUIRY_PRODUCT_REVISION_LEVEL_LENGTH = 4
 
 # INQUIRY SCSI (SIZE: 36 Bytes)
 class scsi_inquiry(Packet):
-		name = "SCSI_Inquiry"
-		fields_desc = [	ByteField("peripheral", None),
-				ByteField("RMB", None),
-				ByteField("version", None),
-				ByteField("?", None),
-				ByteField("additional_length", None),
-				ByteField("??", None),
-				ByteField("???", None),
-				ByteField("????", None),
+                name = "SCSI_Inquiry"
+                fields_desc = [ ByteField("peripheral", None),
+                                ByteField("RMB", None),
+                                ByteField("version", None),
+                                ByteField("?", None),
+                                ByteField("additional_length", None),
+                                ByteField("??", None),
+                                ByteField("???", None),
+                                ByteField("????", None),
 
-				StrFixedLenField("vendor_id", None, SCSI_INQUIRY_VENDOR_ID_LENGTH),
-				StrFixedLenField("product_id", None, SCSI_INQUIRY_PRODUCT_ID_LENGTH),
-				StrFixedLenField("product_revision_level", None, SCSI_INQUIRY_PRODUCT_REVISION_LEVEL_LENGTH)
-				]
+                                StrFixedLenField("vendor_id", None, SCSI_INQUIRY_VENDOR_ID_LENGTH),
+                                StrFixedLenField("product_id", None, SCSI_INQUIRY_PRODUCT_ID_LENGTH),
+                                StrFixedLenField("product_revision_level", None, SCSI_INQUIRY_PRODUCT_REVISION_LEVEL_LENGTH)
+                                ]
 
 # Raw INQUIRY SCSI
 class scsi_raw_inquiry(Packet):
-				name = "SCSI_Raw_Inquiry"
-				fields_desc = [ ByteField("peripheral", None),
-								ByteField("RMB", None),
-								ByteField("version", None),
-								ByteField("?", None),
-								ByteField("additional_length", None),
-								ByteField("??", None),
-								ByteField("???", None),
-								ByteField("????", None),
-								#PAYLOAD VENDOR ID[8] PRODUCT ID[16] PRODUCT REV[4]
-								]
+                                name = "SCSI_Raw_Inquiry"
+                                fields_desc = [ ByteField("peripheral", None),
+                                                                ByteField("RMB", None),
+                                                                ByteField("version", None),
+                                                                ByteField("?", None),
+                                                                ByteField("additional_length", None),
+                                                                ByteField("??", None),
+                                                                ByteField("???", None),
+                                                                ByteField("????", None),
+                                                                #PAYLOAD VENDOR ID[8] PRODUCT ID[16] PRODUCT REV[4]
+                                                                ]
 
 # READ CAPICITY SCSI
 #class scsi_read_capicity(Packet):
-#		name = "SCSI_READ_CAPICITY"
-#		fields_desc = [	ByteField("opcode", 0x25),
-#				ByteField("reserved", None),
-#				XLEIntField("logical_block_adress", None),
-#				ShortField("reserverd", None),
-#				ByteField("reserverd", None),
-#				XByteField("control", None)
-#		]
+#               name = "SCSI_READ_CAPICITY"
+#               fields_desc = [ ByteField("opcode", 0x25),
+#                               ByteField("reserved", None),
+#                               XLEIntField("logical_block_adress", None),
+#                               ShortField("reserverd", None),
+#                               ByteField("reserverd", None),
+#                               XByteField("control", None)
+#               ]
 
 # READ CAPICITY SCSI RESONSE
 class scsi_read_capicity(Packet):
-		name = "SCSI_READ_CAPICITY_RESPONSE"
-		fields_desc = [ XLEIntField("returned_logic_block_addr", None),
-						XLEIntField("block_length", None) ]
+                name = "SCSI_READ_CAPICITY_RESPONSE"
+                fields_desc = [ XLEIntField("returned_logic_block_addr", None),
+                                                XLEIntField("block_length", None) ]
 
 # MODE SELECT (6) SCSI RESPONSE
 class scsi_mode_6(Packet):
-		name = "SCSI_MODE_SELECT_(6)_RESPONSE"
-		fields_desc = [	ByteField("mode_data_length", None),
-				ByteField("medium_field", None),
-				ByteField("dev-specific_parameter", None),
-				ByteField("block_desc_length", None) ]
+                name = "SCSI_MODE_SELECT_(6)_RESPONSE"
+                fields_desc = [ ByteField("mode_data_length", None),
+                                ByteField("medium_field", None),
+                                ByteField("dev-specific_parameter", None),
+                                ByteField("block_desc_length", None) ]
 
 # SCSI COMMAND LIST [OPCODE, NAME, SCAPYNAME]
 SCSI_COMMAND_LIST = [   ['\x04', "FORMAT UNIT", None],
-						['\x12', "INQUIRY", scsi_inquiry],
-						['\x15', "MODE SELECT (6)", scsi_mode_6],
-						['\x55', "MODE SELECT (10)", None],
-						['\x1a', "MODE SENSE (6)", scsi_mode_6],
-						['\x5a', "MODE SENSE (10)", None],
-						['\x1e', "PREVENT ALLOW MEDIUM REMOVAL", None],
-						['\x08', "READ (6)", None],
-						['\x28', "READ (10)", None],
-						['\xa8', "READ (12)", None],
-						['\x25', "READ CAPACITY (10)", scsi_read_capicity],
-						['\x23', "READ FORMAT CAPACITY", None],
-						['\x43', "READ TOC/PMA/ATIP", None],
-						['\xa0', "REPORT LUNS", None],
-						['\x03', "REQUEST SENSE", None],
-						['\x1d', "SEND DIAGNOSITC", None],
-						['\x1b', "START STOP UNIT", None],
-						['\x35', "SYNCHRONIZE CACHE (10)", None],
-						['\x00', "TEST UNIT READY", None],
-						['\x2f', "VERIFY (10)", None],
-						['\x0a', "WRITE (6)", None],
-						['\x2a', "WRITE (10)", None],
-						['\xaa', "WRITE (12)", None]
-				]
+                                                ['\x12', "INQUIRY", scsi_inquiry],
+                                                ['\x15', "MODE SELECT (6)", scsi_mode_6],
+                                                ['\x55', "MODE SELECT (10)", None],
+                                                ['\x1a', "MODE SENSE (6)", scsi_mode_6],
+                                                ['\x5a', "MODE SENSE (10)", None],
+                                                ['\x1e', "PREVENT ALLOW MEDIUM REMOVAL", None],
+                                                ['\x08', "READ (6)", None],
+                                                ['\x28', "READ (10)", None],
+                                                ['\xa8', "READ (12)", None],
+                                                ['\x25', "READ CAPACITY (10)", scsi_read_capicity],
+                                                ['\x23', "READ FORMAT CAPACITY", None],
+                                                ['\x43', "READ TOC/PMA/ATIP", None],
+                                                ['\xa0', "REPORT LUNS", None],
+                                                ['\x03', "REQUEST SENSE", None],
+                                                ['\x1d', "SEND DIAGNOSITC", None],
+                                                ['\x1b', "START STOP UNIT", None],
+                                                ['\x35', "SYNCHRONIZE CACHE (10)", None],
+                                                ['\x00', "TEST UNIT READY", None],
+                                                ['\x2f', "VERIFY (10)", None],
+                                                ['\x0a', "WRITE (6)", None],
+                                                ['\x2a', "WRITE (10)", None],
+                                                ['\xaa', "WRITE (12)", None]
+                                ]
+
+
+def main():
+    # my code here
+  blah = usbredirheader() / hello_redir_header()
+  blah.show()
+
+  print str(blah)
+#  usbredirheader(str(blah)).show()
+
+if __name__ == "__main__":
+    main()
 
