@@ -167,7 +167,7 @@ class lsusbDescriptionParser:
             if type(datacopy) == USBInterfaceDescriptor:
                 interface_num = datacopy.bInterfaceNumber
             elif type(datacopy) == USBEndpointDescriptor:
-                if not (datacopy.bmAttribut == None or datacopy.bInterval == None or datacopy.wMaxPacketSize == None):
+                if not (datacopy.bmAttributes == None or datacopy.bInterval == None or datacopy.wMaxPacketSize == None):
                     # CALC POSITION
                     pos = 0
                     if datacopy.bEndpointAddress >= 0x80:
@@ -175,7 +175,7 @@ class lsusbDescriptionParser:
                     else:
                         pos = datacopy.bEndpointAddress
 
-                    ep_info_type[pos] = (datacopy.bmAttribut % 4)
+                    ep_info_type[pos] = (datacopy.bmAttributes % 4)
                     ep_info_interval[pos] = datacopy.bInterval
                     ep_info_interface[pos] = interface_num
                     ep_info_max_packet_size[pos] = datacopy.wMaxPacketSize
@@ -228,7 +228,7 @@ class lsusbDescriptionParser:
                 elif split[0] == "MaxPower":
                     split[0] = "bMaxPower"
                 elif split[0] == "bmAttributes":
-                    split[0] = "bmAttribut"
+                    split[0] = "bmAttributes"
                 elif split[0] == "iSerial":
                     split[0] = "iSerialNumber"
 

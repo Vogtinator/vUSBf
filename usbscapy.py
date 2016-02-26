@@ -12,7 +12,6 @@ from scapy.fields import *
 from scapy.packet import *
 
 
-
 #####################################
 ####### SCAPY EXTENSION STUFF #######
 #####################################
@@ -230,10 +229,11 @@ class usb_generic_descriptor_header(Packet):
 # USB Endpoint Descriptors
 class USBEndpointDescriptor(Packet):
     name = "USBEndpointDescriptor"
-    fields_desc = [ByteField("bLength", 7),  # Size of Descriptor in Bytes (7 Bytes)
+    fields_desc = [
+                   ByteField("bLength", 7),  # Size of Descriptor in Bytes (7 Bytes)
                    XByteField("bDescriptorType", 0x05),  # Configuration Descriptor (0x05)
                    XByteField("bEndpointAddress", None),  # Endpoint Address TODO!
-                   XByteField("bmAttribut", None),  # TODO
+                   XByteField("bmAttributes", None),  # TODO
                    LEShortField("wMaxPacketSize", None),
                    # Maximum Packet Size this endpoint is cabable of sending or recving
                    ByteField("bInterval", None)  # Interval for polling endpoint data transfer. Value in frame counts
@@ -309,20 +309,12 @@ class USBDeviceDescriptor(Packet):
                         count_from=lambda pkt: pkt.bNumConfigurations),
                    ]
 
-
-
-
-
-
-
-
 class USBStringDescriptor_langid(Packet):
     name = "USBStringDescriptor_LangID"
     fields_desc = [ByteField("bLength", 0),
                    ByteField("bDescriptorType", 0),
                    FieldListField("wLANGID", 0x00, XLEShortField("Value", 1), count_from=lambda p: p.bLength)
     ]
-
 
 class USBStringDescriptor(Packet):
     name = "USBStringDescriptor"
@@ -517,6 +509,7 @@ PROTO_IDS = {
     19: 'my_proto',
     # define all other proto ids
 }
+
 from scapy.layers.inet import *
 class BaseProto(Packet):
     name = "BaseProto"
