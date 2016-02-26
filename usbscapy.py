@@ -84,6 +84,12 @@ usbredir_caps_enum = {
     7: "usb_redir_cap_bulk_receiving",
 };
 
+#USB Device  
+#  Configurations
+#    Interfaces
+#      Endpoints
+
+
 # DO NOT FUZZ THE FOLLOWING REDIR SPECIFIC PACKAGES! FUZZING WILL CAUSE IN QEMU CRASH!
 class usbredirheader(Packet):
     name = "UsbredirPacket"
@@ -221,24 +227,35 @@ class usb_generic_descriptor_header(Packet):
     fields_desc = [ByteField("bLength", 0),
                    XByteField("bDescriptorType", 0x1)]
 
+# USB Endpoint Descriptors
+class USBEndpointDescriptor(Packet):
+    name = "USBEndpointDescriptor"
+    fields_desc = [ByteField("bLength", 7),  # Size of Descriptor in Bytes (7 Bytes)
+                   XByteField("bDescriptorType", 0x05),  # Configuration Descriptor (0x05)
+                   XByteField("bEndpointAddress", None),  # Endpoint Address TODO!
+                   XByteField("bmAttribut", None),  # TODO
+                   LEShortField("wMaxPacketSize", None),
+                   # Maximum Packet Size this endpoint is cabable of sending or recving
+                   ByteField("bInterval", None)  # Interval for polling endpoint data transfer. Value in frame counts
+    ]
 
-# USB Device Descriptor Packet (DescriptorType 0x01)
-class USBDeviceDescriptor(Packet):
-    name = "USBDeviceDescriptor"
-    fields_desc = [ByteField("bLength", 18),
-                   XByteField("bDescriptorType", 0x01),
-                   XLEShortField("bcdUSB", 0x0),
-                   XByteField("bDeviceClass", 0x1),
-                   ByteField("bDeviceSubClass", 0),
-                   ByteField("bDeviceProtocol", 0),
-                   ByteField("bMaxPacketSize", 0),
-                   XLEShortField("isVendor", 0x0),
-                   XLEShortField("idProduct", 0x0),
-                   XLEShortField("bcdDevice", 0x0),
-                   ByteField("iManufacturer", 0),
-                   ByteField("iProduct", 0),
-                   ByteField("iSerialNumber", 0),
-                   ByteField("bNumConfigurations", 1)]
+# USB Interface_Descriptor
+class USBInterfaceDescriptor(Packet):
+    name = "USBInterfaceDescriptor"
+    fields_desc = [
+                   ByteField("bLength", 9),  # Size of Descriptor in Bytes (9 Bytes)
+                   XByteField("bDescriptorType", 0x04),  # Configuration Descriptor (0x04)
+                   ByteField("bInterfaceNumber", None),  # Number of Interface
+                   ByteField("bAlternateSetting", None),  # Value used to select alternative setting
+                   FieldLenField("bNumEndpoints", None, fmt = "B", count_of="endpoints"),  # Number of Endpoints used for this interface
+                   XByteField("bInterfaceClass", None),  # Class Code [0x08: MASSSTORAGE, ...]
+                   XByteField("bInterfaceSubClass", None),  # Subclass Code
+                   XByteField("bInterfaceProtocol", None),  # Protocol Code
+                   ByteField("iInterface", None),  # Index of String Descriptor describing this interface
+                   # Number of Endpoint items is given by bNumEndpoints
+                   PacketListField("endpoints", USBEndpointDescriptor(), USBEndpointDescriptor, \
+                       count_from=lambda pkt: pkt.bNumEndpoints),
+    ]
 
 
 # USB Configuration Descriptor
@@ -248,9 +265,10 @@ class USBConfigurationDescriptor(Packet):
                    ByteField("bLength", 9),  # Size of Descriptor in Bytes
                    XByteField("bDescriptorType", 0x02),  # Configuration Descriptor (0x02)
                    XLEShortField("wTotalLength", 0),  # Total length in bytes of data returned
-                   ByteField("bNumInterfaces", None),  # Number of Interfaces
-                   ByteField("bConfigurationValue", None),  # Value to use as an argument to select this configuration
-                   ByteField("iConfiguration", None),  # Index of String Descriptor describing this configuration
+                   FieldLenField("bNumInterfaces", None, fmt = "B", count_of="interfaces"),  # Number of Interfaces
+                   ByteField("bConfigurationValue", 1),  # Value to use as an argument to select this configuration
+                   #iConfiguration is a index to a string descriptor describing the configuration in human readable form.
+                   ByteField("iConfiguration", 0),  # Index of String Descriptor describing this configuration
                    FlagsField("bmAttributes", 0b11100000, 8, [
                        "Reserved_D0",  # Reserved Bit
                        "Reserved_D1",  # Reserved Bit
@@ -261,36 +279,44 @@ class USBConfigurationDescriptor(Packet):
                        "Self_Powered",  # D6 Self Powered
                        "Reserved_D7",  # D7 Reserved: Must be 1 for USB1.1 and higher
                    ]),
-                   ByteField("bMaxPower", None)  # Maximum Power consumption in 2mA units
+                   ByteField("bMaxPower", 0x1),  # Maximum Power consumption in 2mA units
+                   # TODO this will currently only instantiate one Interface by default, but we'd
+                   #      like this to instantiate the amount based on the setting of bNumEndpoints,
+                   #      and furthermore, the Interface IDs should increment if possible.
+                   PacketListField("interfaces", USBInterfaceDescriptor(), USBInterfaceDescriptor, \
+                        count_from=lambda pkt: pkt.bNumInterfaces),
     ]
 
+# USB Device Descriptor Packet (DescriptorType 0x01)
+class USBDeviceDescriptor(Packet):
+    name = "USBDeviceDescriptor"
+    fields_desc = [
+                     ByteField("bLength", 18),
+                     XByteField("bDescriptorType", 0x01),
+                     XLEShortField("bcdUSB", 0x0),
+                     XByteField("bDeviceClass", 0x1),
+                     ByteField("bDeviceSubClass", 0),
+                     ByteField("bDeviceProtocol", 0),
+                     ByteField("bMaxPacketSize", 0),
+                     XLEShortField("idVendor", 0x0),
+                     XLEShortField("idProduct", 0x0),
+                     XLEShortField("bcdDevice", 0x0),
+                     #Index into a strings table
+                     ByteField("iManufacturer", 0),
+                     #Index into a strings table
+                     ByteField("iProduct", 0),
+                     #Index into a strings table
+                     ByteField("iSerialNumber", 0),
+                     FieldLenField("bNumConfigurations", None, fmt = "B", count_of="configurations"),
+                     PacketListField("configurations", USBConfigurationDescriptor(), USBConfigurationDescriptor, \
+                        count_from=lambda pkt: pkt.bNumConfigurations),
+                   ]
 
-# USB Interface_Descriptor
-class USBInterfaceDescriptor(Packet):
-    name = "USBInterfaceDescriptor"
-    fields_desc = [ByteField("bLength", 9),  # Size of Descriptor in Bytes (9 Bytes)
-                   XByteField("bDescriptorType", 0x04),  # Configuration Descriptor (0x04)
-                   ByteField("bInterfaceNumber", None),  # Number of Interface
-                   ByteField("bAlternateSetting", None),  # Value used to select alternative setting
-                   ByteField("bNumEndpoints", None),  # Number of Endpoints used for this interface
-                   XByteField("bInterfaceClass", None),  # Class Code [0x08: MASSSTORAGE, ...]
-                   XByteField("bInterfaceSubClass", None),  # Subclass Code
-                   XByteField("bInterfaceProtocol", None),  # Protocol Code
-                   ByteField("iInterface", None)  # Index of String Descriptor describing this interface
-    ]
 
 
-# USB Endpoint Descriptors
-class USBEndpointDescriptor(Packet):
-    name = "USBEndpointDescriptor"
-    fields_desc = [ByteField("bLength", 7),  # Size of Descriptor in Bytes (7 Bytes)
-                   XByteField("bDescriptorType", 0x05),  # Configuration Descriptor (0x05)
-                   XByteField("bEndpointAddress", None),  # Endpoint Adress TODO!
-                   XByteField("bmAttribut", None),  # TODO
-                   LEShortField("wMaxPacketSize", None),
-                   # Maximum Packet Size this endpoint is cabable of sending or recving
-                   ByteField("bInterval", None)  # Interval for polling endpoint data transfer. Value in frame counts
-    ]
+
+
+
 
 
 class USBStringDescriptor_langid(Packet):
@@ -303,7 +329,8 @@ class USBStringDescriptor_langid(Packet):
 
 class USBStringDescriptor(Packet):
     name = "USBStringDescriptor"
-    fields_desc = [ByteField("bLength", 0),
+    fields_desc = [
+                   ByteField("bLength", 0),
                    ByteField("bDescriptorType", 0),
                    FieldListField("UnicodeData", 0x00, XLEShortField("Char", 1), count_from=lambda p: p.bLength)
     ]
@@ -318,8 +345,7 @@ class USBHidDescriptor(Packet):
                    ByteField("bNumDescriptors", 0x00),  # WIEDERHOLT SICH IN RELATION ZUR ANZAHL DER DESCRIPTOREN
                    XByteField("bDescriptorType2", 0x22),  # 0x22 REPORT DESCRIPTOR  # 0x23 PYSICAL DESCRIPTOR
                    LEShortField("wDescriptorLength", 0x00)
-    ]
-
+  ]
 
 class usb_hid_report_extension(Packet):
     name = "USB_HID_Report_Extension"
