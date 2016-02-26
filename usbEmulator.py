@@ -77,8 +77,6 @@ class usb_emulator:
     def execute(self):
         connection_to_victim = self.__connect_to_server()
         if connection_to_victim is None:
-            return False
-        if connection_to_victim is None:
             print "Unable to connect to victim..."
             return False
         r_value = self.__connection_loop(connection_to_victim)
@@ -175,7 +173,7 @@ class usb_emulator:
                 self.__print_data(self.__send_data(str(new_packet), connection_to_victim), False)
                 return True
 
-            # cancle_data_packet packet
+            # cancel_data_packet packet
             elif new_packet.Htype == 21:
                 return True
 
@@ -229,8 +227,11 @@ class usb_emulator:
     def __recv_data(self, length, connection_to_victim):
         try:
             data = connection_to_victim.recv(length)
+            if(len(data) != length):
+              print "We received an amount of data we didn't expect"
             return data
-        except:
+        except Exception as e:
+            print e.message  + " during receiving data"
             return ""
 
     def __recv_data_dont_print(self, length, connection_to_victim):
@@ -255,6 +256,7 @@ class usb_emulator:
         while True:
             try:
                 if self.unix_socket == "":
+                    print "Connecting to victim on TCP socket "  + str(self.ip)  + ":" + str(self.port)
                     connection_to_victim = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     connection_to_victim.settimeout(config.TCP_SOCKET_TIMEOUT)
                     connection_to_victim.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
