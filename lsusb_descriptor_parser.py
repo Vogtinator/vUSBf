@@ -103,7 +103,7 @@ class lsusbDescriptionParser:
         connectPacket.device_class = scapyPacket.bDeviceClass
         connectPacket.device_subclass = scapyPacket.bDeviceSubClass
         connectPacket.device_protocol = scapyPacket.bDeviceProtocol
-        connectPacket.vendor_id = scapyPacket.isVendor
+        connectPacket.vendor_id = scapyPacket.idVendor
         connectPacket.product_id = scapyPacket.idProduct
         connectPacket.device_version_bcd = scapyPacket.bcdDevice
 
@@ -222,7 +222,7 @@ class lsusbDescriptionParser:
 
                 # SOME FIXES
                 if split[0] == "idVendor":
-                    split[0] = "isVendor"
+                    split[0] = "idVendor"
                 elif split[0] == "bMaxPacketSize0":
                     split[0] = "bMaxPacketSize"
                 elif split[0] == "MaxPower":

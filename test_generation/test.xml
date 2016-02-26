@@ -22,7 +22,7 @@
 	<atomic_test name="all_vendor_ids" type="fuzz">
 		<fuzz>
 			<packet name="ALL" />
-	       		<field name="isVendor" />
+	       		<field name="idVendor" />
 			<file path="usb_ids/vendor_product.ids" type="hex"><column delimiter=" ">0</column></file>
 		</fuzz>
        

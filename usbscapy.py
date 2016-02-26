@@ -280,9 +280,6 @@ class USBConfigurationDescriptor(Packet):
                        "Reserved_D7",  # D7 Reserved: Must be 1 for USB1.1 and higher
                    ]),
                    ByteField("bMaxPower", 0x1),  # Maximum Power consumption in 2mA units
-                   # TODO this will currently only instantiate one Interface by default, but we'd
-                   #      like this to instantiate the amount based on the setting of bNumEndpoints,
-                   #      and furthermore, the Interface IDs should increment if possible.
                    PacketListField("interfaces", USBInterfaceDescriptor(), USBInterfaceDescriptor, \
                         count_from=lambda pkt: pkt.bNumInterfaces),
     ]

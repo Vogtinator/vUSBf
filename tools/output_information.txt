@@ -1,7 +1,7 @@
 +---------------------------------------------------------+
 Test #1:
         FT: 5163        idProduct: ALL
-        FT: 1   isVendor: ALL
+        FT: 1   idVendor: ALL
         FT: 0   bDeviceClass: USBDeviceDescriptor
         FT: 0   bInterfaceClass: USBInterfaceDescriptor
         FT: 0   bNumEndpoints: USBInterfaceDescriptor
