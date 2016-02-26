@@ -55,7 +55,7 @@ class usb_emulator:
 
     def setup_payload(self, payload):
 
-        data = lsusbDescParser(config.DEV_DESC_FOLDER + payload.get_option("descriptor")).parse()
+        data = lsusbDescriptionParser(config.DEV_DESC_FOLDER + payload.get_option("descriptor")).parse()
         self.payload = data[0]
         self.if_info_packet = data[3]
         self.ep_info_packet = data[4]
@@ -256,12 +256,12 @@ class usb_emulator:
             try:
                 if self.unix_socket == "":
                     connection_to_victim = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    connection_to_victim.settimeout(config.UNIX_SOCKET_TIMEOUT)
+                    connection_to_victim.settimeout(config.TCP_SOCKET_TIMEOUT)
                     connection_to_victim.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                     connection_to_victim.connect((self.ip, self.port))
                 else:
                     connection_to_victim = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-                    connection_to_victim.settimeout(config.TCP_SOCKET_TIMEOUT)
+                    connection_to_victim.settimeout(config.UNIX_SOCKET_TIMEOUT)
                     connection_to_victim.connect(self.unix_socket)
                 break
             except:
