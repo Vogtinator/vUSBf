@@ -126,9 +126,7 @@ class usb_emulator:
         connection_to_victim.settimeout(config.CONNECTION_TO_VICTIM_TIMEOUT)
         try:
             hello_packet = self.__recv_data(80, connection_to_victim)
-            
             usbredirheader(hello_packet).show()
-            
             self.__print_data(hello_packet, True)
             self.__print_data(self.__send_data(self.__get_hello_packet(), connection_to_victim), False)
             self.__print_data(self.__send_data(self.__get_if_info_packet(), connection_to_victim), False)
@@ -145,7 +143,7 @@ class usb_emulator:
                 raw_data = self.__recv_data_dont_print(new_packet.HLength, connection_to_victim)
                 raw_data = str(new_packet) + raw_data
                 new_packet = usbredir_parser(raw_data).getScapyPacket()
-            
+
             except:
                 return True
 

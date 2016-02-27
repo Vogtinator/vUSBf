@@ -83,7 +83,7 @@ usbredir_caps_enum = {
     7: "usb_redir_cap_bulk_receiving",
 };
 
-#USB Device  
+#USB Device
 #  Configurations
 #    Interfaces
 #      Endpoints
@@ -352,14 +352,14 @@ class usb_hid_report_descriptor(Packet):
     fields_desc = []
 
 
-descriptor_types = { 0x01: USBDeviceDescriptor,
+descriptor_types = {
+                        0x01: USBDeviceDescriptor,
                         0x02: USBConfigurationDescriptor,
                         0x03: USBStringDescriptor,
                         0x04: USBInterfaceDescriptor,
                         0x05: USBEndpointDescriptor,
                         0x09: USBHidDescriptor
                         }
-
 
 
 bind_layers(data_control_redir_header, usb_generic_descriptor_header, Htype = 100)
