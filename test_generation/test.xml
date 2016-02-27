@@ -2,12 +2,12 @@
 	<atomic_test name="all_class_ids1" type="fuzz">
 		<fuzz>
 			<packet name="USBDeviceDescriptor" />
-	       		<field name="bDeviceClass" />
+			<field name="bDeviceClass" />
 			<file path="usb_ids/class.ids" type="hex"><column delimiter=" ">0</column></file>
 		</fuzz>
-       
+
 	</atomic_test>
-	
+
 	<atomic_test name="all_class_ids2" type="fuzz">
                 <fuzz>
                         <packet name="USBInterfaceDescriptor" />
@@ -22,16 +22,16 @@
 	<atomic_test name="all_vendor_ids" type="fuzz">
 		<fuzz>
 			<packet name="ALL" />
-	       		<field name="idVendor" />
+			<field name="idVendor" />
 			<file path="usb_ids/vendor_product.ids" type="hex"><column delimiter=" ">0</column></file>
 		</fuzz>
-       
+
 	</atomic_test>
 
 	<atomic_test name="all_product_ids" type="fuzz">
 		<fuzz>
 			<packet name="ALL" />
-	      		<field name="idProduct" />
+			<field name="idProduct" />
 			<file path="usb_ids/vendor_product.ids" type="hex"><column delimiter=" ">1</column></file>
 		</fuzz>
 	</atomic_test>
@@ -59,7 +59,7 @@
                         <value>31</value>
                         <value>255</value>
                 </fuzz>
-        </atomic_test>	
+        </atomic_test>
 
         <atomic_test name="invalid_bMaxPacketSize" type="fuzz">
                 <fuzz>
@@ -164,5 +164,5 @@
 
 
 
-	
+
 </atomic_testcases>

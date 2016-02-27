@@ -253,7 +253,6 @@ class usb_emulator:
         if config.VERBOSE_LEVEL >= config.VERBOSE_LEVEL_PRINT_ERROR_MESSAGES:
             print "ERROR:\t" + msg
 
-
     def __connect_to_server(self):
         num_of_tries = 0
         connection_to_victim = None
