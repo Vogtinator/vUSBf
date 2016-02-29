@@ -1,5 +1,6 @@
-
+from usbscapy import *
 
 class USBDevice():
-  def __init__(self, usbDev):
-    self.device_descriptor = usbDev
+  name = "USBDevice"
+  def __init__(self, device_descriptor):
+    self.device_descriptor = device_descriptor

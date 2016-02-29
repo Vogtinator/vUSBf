@@ -1,6 +1,7 @@
 from usbscapy import *
 from usbEmulator import usb_emulator
 from usb_device import USBDevice
+from lsusb_descriptor_parser import lsusbDescriptionParser
 
 interface = USBInterfaceDescriptor(
         bInterfaceNumber       = 0,
@@ -31,3 +32,14 @@ usbDev = USBDevice(usbDevDescriptor)
 
 emu = usb_emulator(["127.0.0.1", 1235], 0)
 emu.connect_device(usbDev)
+
+data = lsusbDescriptionParser("dev_desc/multi_flash.txt").parse()
+payload = data[0]
+if_info_packet = data[3]
+ep_info_packet = data[4]
+connect_packet = data[2]
+
+Vusb = USBDevice(dev_descr)
+emu = usb_redir_interface(["127.0.0.1", 1235], 0)
+emu.connect_device(usb)
+

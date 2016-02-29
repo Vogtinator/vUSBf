@@ -92,10 +92,18 @@ usbredir_caps_enum = {
 # DO NOT FUZZ THE FOLLOWING REDIR SPECIFIC PACKAGES! FUZZING WILL CAUSE IN QEMU CRASH!
 class usbredirheader(Packet):
     name = "UsbredirPacket"
-    fields_desc = [LEIntEnumField("Htype", 0, usbredir_type_enum),
-                   LEIntField("HLength", 0),
-                   LEIntField("Hid", 0)]
+    fields_desc = [
+                     LEIntEnumField("Htype", 0, usbredir_type_enum),
+                     LEIntField("HLength", None),
+                     LEIntField("Hid", 0)
+                   ]
 
+    def post_build(self, p, pay):
+      p += pay
+      if self.HLength == None:
+        l = len(pay)
+        p = p[:4] + struct.pack("I",l) + p[8:]
+      return p
 
 # Redir Packet No. 0 (redir hello)
 class hello_redir_header(Packet):
@@ -112,7 +120,9 @@ class hello_redir_header(Packet):
 
 class hello_redir_header_host(Packet):
     name = "Hello_Packet_Host"
-    fields_desc = [StrLenField("version", "", length_from=56)]
+    fields_desc = [
+                     StrLenField("version", "", length_from=56)
+                  ]
 
 
 # Redir Packet No. 1 (redir connect)
@@ -131,10 +141,10 @@ class connect_redir_header(Packet):
 class if_info_redir_header(Packet):
     name = "Interface Info Packet"
     fields_desc = [LEIntField("interface_count", None),
-                   FieldListField("interface", None, ByteField("Value", 0), length_from=lambda p: 32),
-                   FieldListField("interface_class", None, ByteField("Value", 0), length_from=lambda p: 32),
-                   FieldListField("interface_subclass", None, ByteField("Value", 0), length_from=lambda p: 32),
-                   FieldListField("interface_protocol", None, ByteField("Value", 0), length_from=lambda p: 32)]
+                   FieldListField("interface", [0]*32, ByteField("Value", 0), length_from=lambda p: 32),
+                   FieldListField("interface_class", [0]*32, ByteField("Value", 0), length_from=lambda p: 32),
+                   FieldListField("interface_subclass", [0]*32, ByteField("Value", 0), length_from=lambda p: 32),
+                   FieldListField("interface_protocol", [0]*32, ByteField("Value", 0), length_from=lambda p: 32)]
 
 
 # Redir Packet No. 5 (endpoint info)    [SIZE 160 BYTES]
