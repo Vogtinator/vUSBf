@@ -74,6 +74,29 @@ class usb_emulator:
         else:
             raise Exception("Unknown emulator")
 
+    def connect_device(self, usbDev):
+        connection_to_victim = self.__connect_to_server()
+        if connection_to_victim is None:
+            print "Unable to connect to victim..."
+            return False
+
+        #connection_to_victim.settimeout(config.CONNECTION_TO_VICTIM_TIMEOUT)
+
+        hello_packet = self.__recv_data(80, connection_to_victim)
+        usbredirheader(hello_packet).show()
+        self.__print_data(hello_packet, True)
+        self.__print_data(self.__send_data(self.__get_hello_packet(), connection_to_victim), False)
+
+        device_descriptor = usbDev.device_descriptor
+
+        for config in device_descriptor.configurations:
+          print config.show()
+          for interface in config.interfaces:
+            print interface.show()
+            for endpoint in interface.endpoints:
+              print endpoint.show()
+
+
     def execute(self):
         connection_to_victim = self.__connect_to_server()
         if connection_to_victim is None:
@@ -257,6 +280,8 @@ class usb_emulator:
         while True:
             try:
                 if self.unix_socket == "":
+                    print self.ip.__class__
+                    print self.port.__class__
                     print "Connecting to victim on TCP socket "  + str(self.ip)  + ":" + str(self.port)
                     connection_to_victim = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     connection_to_victim.settimeout(config.TCP_SOCKET_TIMEOUT)
