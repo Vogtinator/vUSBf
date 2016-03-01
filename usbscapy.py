@@ -150,14 +150,14 @@ class if_info_redir_header(Packet):
 # Redir Packet No. 5 (endpoint info)    [SIZE 160 BYTES]
 class ep_info_redir_header(Packet):
     name = "Endpoint Info Packet"
-    fields_desc = [FieldListField("ep_type", None, ByteEnumField("type_value", 0, {0: "type_control",
+    fields_desc = [FieldListField("ep_type", [255]*32, ByteEnumField("type_value", 0, {0: "type_control",
                                                                                    1: "type_iso",
                                                                                    2: "type interrupt",
                                                                                    255: "type invalid", })
                                   , length_from=lambda p: 32),
-                   FieldListField("interval", None, ByteField("Value", 0), length_from=lambda p: 32),
-                   FieldListField("interface", None, ByteField("Value", 0), length_from=lambda p: 32),
-                   FieldListField("max_packet_size", None, XLEShortField("Value", 0), length_from=lambda p: 32 * 2)]
+                   FieldListField("interval", [0]*32, ByteField("Value", 0), length_from=lambda p: 32),
+                   FieldListField("interface", [0]*32, ByteField("Value", 0), length_from=lambda p: 32),
+                   FieldListField("max_packet_size", [0]*32, XLEShortField("Value", 0), length_from=lambda p: 32 * 2)]
 
 
 # Redir Packet No. 100 (data control)   [SIZE 10 BYTES]
