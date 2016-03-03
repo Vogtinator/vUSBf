@@ -543,6 +543,10 @@ def main():
   p = usbredirheader(str(blah))
   p.show()
 
+  print "ep_info:"
+  ep_info = usbredirheader() / ep_info_redir_header()
+  ep_info.show2()
+
 if __name__ == "__main__":
     main()
 

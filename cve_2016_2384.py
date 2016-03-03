@@ -38,8 +38,3 @@ payload = data[0]
 if_info_packet = data[3]
 ep_info_packet = data[4]
 connect_packet = data[2]
-
-Vusb = USBDevice(dev_descr)
-emu = usb_redir_interface(["127.0.0.1", 1235], 0)
-emu.connect_device(usb)
-

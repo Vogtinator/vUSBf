@@ -74,6 +74,33 @@ class usb_emulator:
         else:
             raise Exception("Unknown emulator")
 
+
+    def handle_control_packet(self, raw_data, usbDev):
+      usb_redir_packet = usbredirheader(raw_data)
+
+      # Handle control packets only
+      if usb_redir_packet.Htype != 100:
+        return None
+
+      if usb_redir_packet.endpoint != 0x80:
+        return usb_redir_packet
+
+      descriptor_request = usb_redir_packet.value >> (8)
+      descriptor_num = usb_redir_packet.value % 256
+      request = usb_redir_packet.request
+
+      if descriptor_request == 0x01:
+        return usb_redir_packet / usbDev.device_descriptor
+      # configuration_descriptor
+      elif descriptor_request == 0x02:
+        if usb_redir_packet.length > 9:
+          print "We were expecting the full USBDeviceDescriptor"
+        return usb_redir_packet / \
+        usbDev.device_descriptor.configurations[configuration_num]
+      elif descriptor_request == 0x03:
+        return usb_redir_packet / USBStringDescriptor('\x04\x03\x09\x04')
+
+
     def connect_device(self, usbDev):
         connection_to_victim = self.__connect_to_server()
         if connection_to_victim is None:
@@ -89,13 +116,48 @@ class usb_emulator:
 
         device_descriptor = usbDev.device_descriptor
 
-        for config in device_descriptor.configurations:
-          print config.show()
-          for interface in config.interfaces:
-            print interface.show()
-            for endpoint in interface.endpoints:
-              print endpoint.show()
+        ep_info_header = ep_info_redir_header()
+        interface_info_redir = if_info_redir_header()
+        connect_redir        = connect_redir_header()
 
+        connect_redir.speed           = 2
+        connect_redir.device_class    = device_descriptor.bDeviceClass
+        connect_redir.device_subclass = device_descriptor.bDeviceSubClass
+        connect_redir.device_protocol = device_descriptor.bDeviceProtocol
+        connect_redir.vendor_id       = device_descriptor.idVendor
+        connect_redir.product_id      = device_descriptor.bcdDevice
+
+        ep_count = 0
+        for config in device_descriptor.configurations:
+          interface_info_redir.interface_count = len(config.interfaces)
+          for index, interface in enumerate(config.interfaces):
+
+            interface_info_redir.interface[index] = interface.bInterfaceNumber
+            interface_info_redir.interface_class[index] = interface.bInterfaceClass
+            interface_info_redir.interface_subclass[index] = interface.bInterfaceSubClass
+            interface_info_redir.interface_protocol[index] = interface.bInterfaceProtocol
+
+            for endpoint in interface.endpoints:
+              ep_count += 1
+              ep_info_header.ep_type[ep_count]   = endpoint.bmAttributes % 4
+              ep_info_header.interval[ep_count]  = endpoint.bInterval
+              ep_info_header.interface[ep_count] = interface.bInterfaceNumber
+              ep_info_header.max_packet_size[ep_count] = endpoint.wMaxPacketSize
+
+        #usbredir procotol specifies that we must send the usb_redir_ep_info
+        # then usb_redir_interface_info
+        # then we can send usb_redir_device_connect_info
+
+        ep_info_data = str(usbredirheader() / ep_info_redir_header())
+        self.__print_data(self.__send_data(ep_info_data, connection_to_victim), False)
+
+
+        interface_info_data = str(usbredirheader() / interface_info_redir)
+        self.__print_data(self.__send_data(interface_info_data, connection_to_victim), False)
+
+        connect_device_data = str(usbredirheader() / connect_redir)
+        self.__print_data(self.__send_data(connect_device_data, connection_to_victim), False)
+        self.redir_loop(connection_to_victim, self.handle_control_packet)
 
     def execute(self):
         connection_to_victim = self.__connect_to_server()
@@ -130,7 +192,7 @@ class usb_emulator:
         return str(pkt)
 
     def __get_ep_info_packet(self):
-        pkt = usbredirheader()
+        pkt = usVbredirheader()
         pkt.Htype = 5
         pkt.HLength = 160
         pkt.Hid = 0
@@ -143,6 +205,80 @@ class usb_emulator:
         pkt.HLength = 0
         pkt.Hid = 0
         return str(pkt)
+
+    def redir_loop(self, connection_to_victim, handle_control_packet_lambda):
+        for _ in range(config.MAX_PACKETS):
+            try:
+                new_packet = usbredirheader(self.__recv_data_dont_print(12, connection_to_victim))
+                if new_packet.Htype == -1:
+                    return True
+                raw_data = self.__recv_data_dont_print(new_packet.HLength, connection_to_victim)
+                raw_data = str(new_packet) + raw_data
+                new_packet = usbredir_parser(raw_data).getScapyPacket()
+            except:
+                return True
+
+            self.handle_redir_packet(new_packet, handle_control_packet_lambda, connection_to_victim)
+
+
+    def handle_redir_packet(self, new_packet, handle_control_packet_function, connection_to_victim):
+       raw_data = str(new_packet)
+       # hello packet
+       if new_packet.Htype == 0:
+           self.__print_data(str(new_packet), True)
+           self.__print_data(self.__send_data(str(new_packet), connection_to_victim), False)
+
+       # reset packet
+       elif new_packet.Htype == 3:
+           self.__print_data(str(new_packet), True)
+           self.__print_data(self.__send_data(self.__get_reset_packet(), connection_to_victim), False)
+
+       # set_configuration packet
+       elif new_packet.Htype == 6:
+           self.__print_data(str(new_packet), True)
+           new_packet.Htype = 8
+           new_packet.HLength = new_packet.HLength + 1
+           new_packet.payload = Raw('\x00' + str(new_packet.payload))
+           self.__print_data(self.__send_data(str(new_packet), connection_to_victim), False)
+           #connection_to_victim.settimeout(0.5)
+
+       # start_interrupt_receiving packet
+       elif new_packet.Htype == 15:
+           self.__print_data(str(new_packet), True)
+           new_packet.Htype = 17
+           new_packet.HLength = new_packet.HLength + 1
+           new_packet.payload = Raw('\x00' + str(new_packet.payload))
+           self.__print_data(self.__send_data(str(new_packet), connection_to_victim), False)
+           return True
+
+       # cancel_data_packet packet
+       elif new_packet.Htype == 21:
+           return True
+
+       # data_control_packet packet
+       elif new_packet.Htype == 100:
+           # recv request
+           self.__print_data(raw_data, True)
+           # send response
+           response = str(handle_control_packet_function(str(new_packet)))
+           self.__print_data(self.__send_data(response, connection_to_victim), False)
+
+       # data_bulk_packet packet
+       elif new_packet.Htype == 101:
+           self.__send_data(response, connection_to_victim)
+
+       # data_interrupt_packet packet
+       elif new_packet.Htype == 103:
+           new_packet.HLength = 4
+           Raw(raw_data).show()
+           interrupt_payload = data_interrupt_redir_header(raw_data[12:])
+           Raw(str(new_packet) + str(interrupt_payload)).show()
+           interrupt_payload.status = 0
+           interrupt_payload.load = None
+           Raw(str(new_packet) + str(interrupt_payload)).show()
+           self.__send_data(str(new_packet) + str(interrupt_payload), connection_to_victim)
+       else:
+           return True
 
     def __connection_loop(self, connection_to_victim):
 
@@ -158,75 +294,7 @@ class usb_emulator:
         except:
             return False
 
-        for _ in range(config.MAX_PACKETS):
-            try:
-                new_packet = usbredirheader(self.__recv_data_dont_print(12, connection_to_victim))
-                if new_packet.Htype == -1:
-                    return True
-                raw_data = self.__recv_data_dont_print(new_packet.HLength, connection_to_victim)
-                raw_data = str(new_packet) + raw_data
-                new_packet = usbredir_parser(raw_data).getScapyPacket()
-
-            except:
-                return True
-
-            # hello packet
-            if new_packet.Htype == 0:
-                self.__print_data(str(new_packet), True)
-                self.__print_data(self.__send_data(str(new_packet), connection_to_victim), False)
-
-            # reset packet
-            elif new_packet.Htype == 3:
-                self.__print_data(str(new_packet), True)
-                self.__print_data(self.__send_data(self.__get_reset_packet(), connection_to_victim), False)
-
-            # set_configuration packet
-            elif new_packet.Htype == 6:
-                self.__print_data(str(new_packet), True)
-                new_packet.Htype = 8
-                new_packet.HLength = new_packet.HLength + 1
-                new_packet.payload = Raw('\x00' + str(new_packet.payload))
-                self.__print_data(self.__send_data(str(new_packet), connection_to_victim), False)
-                #connection_to_victim.settimeout(0.5)
-
-            # start_interrupt_receiving packet
-            elif new_packet.Htype == 15:
-                self.__print_data(str(new_packet), True)
-                new_packet.Htype = 17
-                new_packet.HLength = new_packet.HLength + 1
-                new_packet.payload = Raw('\x00' + str(new_packet.payload))
-                self.__print_data(self.__send_data(str(new_packet), connection_to_victim), False)
-                return True
-
-            # cancel_data_packet packet
-            elif new_packet.Htype == 21:
-                return True
-
-            # data_control_packet packet
-            elif new_packet.Htype == 100:
-                # recv request
-                self.__print_data(raw_data, True)
-                # send response
-                response = str(self.enum_emulator.get_response(str(new_packet)))
-                self.__print_data(self.__send_data(response, connection_to_victim), False)
-
-            # data_bulk_packet packet
-            elif new_packet.Htype == 101:
-                self.__send_data(response, connection_to_victim)
-
-            # data_interrupt_packet packet
-            elif new_packet.Htype == 103:
-                new_packet.HLength = 4
-                Raw(raw_data).show()
-                interrupt_payload = data_interrupt_redir_header(raw_data[12:])
-                Raw(str(new_packet) + str(interrupt_payload)).show()
-                interrupt_payload.status = 0
-                interrupt_payload.load = None
-                Raw(str(new_packet) + str(interrupt_payload)).show()
-                self.__send_data(str(new_packet) + str(interrupt_payload), connection_to_victim)
-
-            else:
-                return True
+        self.redir_loop(connection_to_victim, self.enum_emulator.get_response)
 
         return True
 
@@ -280,8 +348,6 @@ class usb_emulator:
         while True:
             try:
                 if self.unix_socket == "":
-                    print self.ip.__class__
-                    print self.port.__class__
                     print "Connecting to victim on TCP socket "  + str(self.ip)  + ":" + str(self.port)
                     connection_to_victim = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     connection_to_victim.settimeout(config.TCP_SOCKET_TIMEOUT)
