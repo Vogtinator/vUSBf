@@ -89,14 +89,36 @@ class usb_emulator:
       descriptor_num = usb_redir_packet.value % 256
       request = usb_redir_packet.request
 
+      print "descriptor_request: "  + str(descriptor_request)
       if descriptor_request == 0x01:
-        return usb_redir_packet / usbDev.device_descriptor
+        r = str(usbDev.device_descriptor)
+        dd = USBDeviceDescriptor(r)
+        dd.configurations = []
+        dd.bNumConfigurations = len(usbDev.device_descriptor.configurations)
+
+
+        USBDeviceDescriptor(str(dd)).show()
+
+        pkt = usb_redir_packet / dd
+        pkt.HLength = len(str(dd)) + 10
+        pkt.length = len(str(dd))
+        pkt.status = 0
+        return pkt
       # configuration_descriptor
       elif descriptor_request == 0x02:
         if usb_redir_packet.length > 9:
           print "We were expecting the full USBDeviceDescriptor"
-        return usb_redir_packet / \
-        usbDev.device_descriptor.configurations[configuration_num]
+        config_desc = usbDev.device_descriptor.configurations[descriptor_num]
+        config_desc.interfaces = []
+        config_desc.bNumInterfaces = 1
+        print "USB Config desc: "
+        USBConfigurationDescriptor(str(config_desc)).show()
+        pkt = usb_redir_packet / config_desc
+        pkt.HLength = len(str(config_desc)) + 10
+        pkt.status  =  0
+        pkt.length  = len(str(config_desc))
+        print "Requested configuration number: "  + str(descriptor_num)
+        return pkt
       elif descriptor_request == 0x03:
         return usb_redir_packet / USBStringDescriptor('\x04\x03\x09\x04')
 
@@ -130,6 +152,7 @@ class usb_emulator:
         ep_count = 0
         for config in device_descriptor.configurations:
           interface_info_redir.interface_count = len(config.interfaces)
+          print "Interface count : "  + str(interface_info_redir.interface_count)
           for index, interface in enumerate(config.interfaces):
 
             interface_info_redir.interface[index] = interface.bInterfaceNumber
@@ -144,6 +167,12 @@ class usb_emulator:
               ep_info_header.interface[ep_count] = interface.bInterfaceNumber
               ep_info_header.max_packet_size[ep_count] = endpoint.wMaxPacketSize
 
+
+        #Default control endpoints
+        ep_info_header.ep_type[0] = 0  #type_control
+        ep_info_header.ep_type[16] = 0  #type_control
+
+
         #usbredir procotol specifies that we must send the usb_redir_ep_info
         # then usb_redir_interface_info
         # then we can send usb_redir_device_connect_info
@@ -151,13 +180,12 @@ class usb_emulator:
         ep_info_data = str(usbredirheader() / ep_info_redir_header())
         self.__print_data(self.__send_data(ep_info_data, connection_to_victim), False)
 
-
         interface_info_data = str(usbredirheader() / interface_info_redir)
         self.__print_data(self.__send_data(interface_info_data, connection_to_victim), False)
 
         connect_device_data = str(usbredirheader() / connect_redir)
         self.__print_data(self.__send_data(connect_device_data, connection_to_victim), False)
-        self.redir_loop(connection_to_victim, self.handle_control_packet)
+        self.redir_loop(connection_to_victim, usbDev)
 
     def execute(self):
         connection_to_victim = self.__connect_to_server()
@@ -206,22 +234,18 @@ class usb_emulator:
         pkt.Hid = 0
         return str(pkt)
 
-    def redir_loop(self, connection_to_victim, handle_control_packet_lambda):
+    def redir_loop(self, connection_to_victim, usbDev):
         for _ in range(config.MAX_PACKETS):
-            try:
-                new_packet = usbredirheader(self.__recv_data_dont_print(12, connection_to_victim))
-                if new_packet.Htype == -1:
-                    return True
-                raw_data = self.__recv_data_dont_print(new_packet.HLength, connection_to_victim)
-                raw_data = str(new_packet) + raw_data
-                new_packet = usbredir_parser(raw_data).getScapyPacket()
-            except:
+            new_packet = usbredirheader(self.__recv_data_dont_print(12, connection_to_victim))
+            if new_packet.Htype == -1:
                 return True
+            raw_data = self.__recv_data_dont_print(new_packet.HLength, connection_to_victim)
+            raw_data = str(new_packet) + raw_data
+            new_packet = usbredir_parser(raw_data).getScapyPacket()
+            self.handle_redir_packet(new_packet, connection_to_victim, usbDev)
 
-            self.handle_redir_packet(new_packet, handle_control_packet_lambda, connection_to_victim)
 
-
-    def handle_redir_packet(self, new_packet, handle_control_packet_function, connection_to_victim):
+    def handle_redir_packet(self, new_packet, connection_to_victim, usbDev):
        raw_data = str(new_packet)
        # hello packet
        if new_packet.Htype == 0:
@@ -260,7 +284,7 @@ class usb_emulator:
            # recv request
            self.__print_data(raw_data, True)
            # send response
-           response = str(handle_control_packet_function(str(new_packet)))
+           response = str(self.handle_control_packet(str(new_packet), usbDev))
            self.__print_data(self.__send_data(response, connection_to_victim), False)
 
        # data_bulk_packet packet
@@ -294,7 +318,7 @@ class usb_emulator:
         except:
             return False
 
-        self.redir_loop(connection_to_victim, self.enum_emulator.get_response)
+        self.redir_loop(connection_to_victim, self.enum_emulator.get_response, usbDev)
 
         return True
 

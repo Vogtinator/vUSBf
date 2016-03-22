@@ -259,15 +259,15 @@ class USBInterfaceDescriptor(Packet):
     fields_desc = [
                    ByteField("bLength", 9),  # Size of Descriptor in Bytes (9 Bytes)
                    XByteField("bDescriptorType", 0x04),  # Configuration Descriptor (0x04)
-                   ByteField("bInterfaceNumber", None),  # Number of Interface
-                   ByteField("bAlternateSetting", None),  # Value used to select alternative setting
-                   FieldLenField("bNumEndpoints", None, fmt = "B", count_of="endpoints"),  # Number of Endpoints used for this interface
-                   XByteField("bInterfaceClass", None),  # Class Code [0x08: MASSSTORAGE, ...]
-                   XByteField("bInterfaceSubClass", None),  # Subclass Code
-                   XByteField("bInterfaceProtocol", None),  # Protocol Code
-                   ByteField("iInterface", None),  # Index of String Descriptor describing this interface
+                   ByteField("bInterfaceNumber",  0),  # Number of Interface
+                   ByteField("bAlternateSetting", 0),  # Value used to select alternative setting
+                   FieldLenField("bNumEndpoints", 0, fmt = "B", count_of="endpoints"),  # Number of Endpoints used for this interface
+                   XByteField("bInterfaceClass",  0),  # Class Code [0x08: MASSSTORAGE, ...]
+                   XByteField("bInterfaceSubClass", 0),  # Subclass Code
+                   XByteField("bInterfaceProtocol", 0),  # Protocol Code
+                   ByteField("iInterface", 0),  # Index of String Descriptor describing this interface
                    # Number of Endpoint items is given by bNumEndpoints
-                   PacketListField("endpoints", USBEndpointDescriptor(), USBEndpointDescriptor, \
+                   PacketListField("endpoints", [], USBEndpointDescriptor, \
                        count_from=lambda pkt: pkt.bNumEndpoints),
     ]
 
@@ -279,8 +279,8 @@ class USBConfigurationDescriptor(Packet):
                    ByteField("bLength", 9),  # Size of Descriptor in Bytes
                    XByteField("bDescriptorType", 0x02),  # Configuration Descriptor (0x02)
                    XLEShortField("wTotalLength", 0),  # Total length in bytes of data returned
-                   FieldLenField("bNumInterfaces", None, fmt = "B", count_of="interfaces"),  # Number of Interfaces
-                   ByteField("bConfigurationValue", 1),  # Value to use as an argument to select this configuration
+                   FieldLenField("bNumInterfaces", 0, fmt = "B", count_of="interfaces"),  # Number of Interfaces
+                   ByteField("bConfigurationValue", 0),  # Value to use as an argument to select this configuration
                    #iConfiguration is a index to a string descriptor describing the configuration in human readable form.
                    ByteField("iConfiguration", 0),  # Index of String Descriptor describing this configuration
                    FlagsField("bmAttributes", 0b11100000, 8, [
@@ -294,7 +294,7 @@ class USBConfigurationDescriptor(Packet):
                        "Reserved_D7",  # D7 Reserved: Must be 1 for USB1.1 and higher
                    ]),
                    ByteField("bMaxPower", 0x1),  # Maximum Power consumption in 2mA units
-                   PacketListField("interfaces", USBInterfaceDescriptor(), USBInterfaceDescriptor, \
+                   PacketListField("interfaces", [], USBInterfaceDescriptor, \
                         count_from=lambda pkt: pkt.bNumInterfaces),
     ]
 
@@ -319,7 +319,7 @@ class USBDeviceDescriptor(Packet):
                      #Index into a strings table
                      ByteField("iSerialNumber", 0),
                      FieldLenField("bNumConfigurations", None, fmt = "B", count_of="configurations"),
-                     PacketListField("configurations", USBConfigurationDescriptor(), USBConfigurationDescriptor, \
+                     PacketListField("configurations", [], USBConfigurationDescriptor, \
                         count_from=lambda pkt: pkt.bNumConfigurations),
                    ]
 
