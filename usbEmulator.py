@@ -177,7 +177,7 @@ class usb_emulator:
         # then usb_redir_interface_info
         # then we can send usb_redir_device_connect_info
 
-        ep_info_data = str(usbredirheader() / ep_info_redir_header())
+        ep_info_data = str(usbredirheader() / ep_info_header)
         self.__print_data(self.__send_data(ep_info_data, connection_to_victim), False)
 
         interface_info_data = str(usbredirheader() / interface_info_redir)
