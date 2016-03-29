@@ -280,7 +280,7 @@ class USBConfigurationDescriptor(Packet):
                    XByteField("bDescriptorType", 0x02),  # Configuration Descriptor (0x02)
                    XLEShortField("wTotalLength", 0),  # Total length in bytes of data returned
                    FieldLenField("bNumInterfaces", 0, fmt = "B", count_of="interfaces"),  # Number of Interfaces
-                   ByteField("bConfigurationValue", 0),  # Value to use as an argument to select this configuration
+                   ByteField("bConfigurationValue", 1),  # Value to use as an argument to select this configuration
                    #iConfiguration is a index to a string descriptor describing the configuration in human readable form.
                    ByteField("iConfiguration", 0),  # Index of String Descriptor describing this configuration
                    FlagsField("bmAttributes", 0b11100000, 8, [

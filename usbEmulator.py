@@ -96,27 +96,27 @@ class usb_emulator:
         dd.configurations = []
         dd.bNumConfigurations = len(usbDev.device_descriptor.configurations)
 
-
-        USBDeviceDescriptor(str(dd)).show()
-
         pkt = usb_redir_packet / dd
         pkt.HLength = len(str(dd)) + 10
         pkt.length = len(str(dd))
         pkt.status = 0
+        USBDeviceDescriptor(str(dd)).show()
         return pkt
       # configuration_descriptor
       elif descriptor_request == 0x02:
         if usb_redir_packet.length > 9:
           print "We were expecting the full USBDeviceDescriptor"
+          sys.exit(-1)
         config_desc = usbDev.device_descriptor.configurations[descriptor_num]
-        config_desc.interfaces = []
         config_desc.bNumInterfaces = 1
         print "USB Config desc: "
-        USBConfigurationDescriptor(str(config_desc)).show()
         pkt = usb_redir_packet / config_desc
         pkt.HLength = len(str(config_desc)) + 10
         pkt.status  =  0
         pkt.length  = len(str(config_desc))
+        pkt.bLength = 9
+        USBConfigurationDescriptor(str(config_desc)).show()
+        print "LENGTH : " + str(pkt.length)
         print "Requested configuration number: "  + str(descriptor_num)
         return pkt
       elif descriptor_request == 0x03:
@@ -261,8 +261,8 @@ class usb_emulator:
        elif new_packet.Htype == 6:
            self.__print_data(str(new_packet), True)
            new_packet.Htype = 8
-           new_packet.HLength = new_packet.HLength + 1
-           new_packet.payload = Raw('\x00' + str(new_packet.payload))
+           new_packet.HLength = new_packet.HLength
+           new_packet.payload = Raw('\x01')
            self.__print_data(self.__send_data(str(new_packet), connection_to_victim), False)
            #connection_to_victim.settimeout(0.5)
 
