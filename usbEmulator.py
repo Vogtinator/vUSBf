@@ -104,9 +104,6 @@ class usb_emulator:
         return pkt
       # configuration_descriptor
       elif descriptor_request == 0x02:
-        if usb_redir_packet.length > 9:
-          print "We were expecting the full USBDeviceDescriptor"
-          sys.exit(-1)
         config_desc = usbDev.device_descriptor.configurations[descriptor_num]
         config_desc.bNumInterfaces = 1
         print "USB Config desc: "
@@ -120,7 +117,10 @@ class usb_emulator:
         print "Requested configuration number: "  + str(descriptor_num)
         return pkt
       elif descriptor_request == 0x03:
-        return usb_redir_packet / USBStringDescriptor('\x04\x03\x09\x04')
+        pkt = usb_redir_packet / USBStringDescriptor('\x04\x03\x09\x04')
+        pkt.HLength = len(str(USBStringDescriptor('\x04\x03\x09\x04'))) + 10
+        pkt.length = len(str(USBStringDescriptor('\x04\x03\x09\x04')))
+        return pkt
 
 
     def connect_device(self, usbDev):
@@ -252,11 +252,6 @@ class usb_emulator:
            self.__print_data(str(new_packet), True)
            self.__print_data(self.__send_data(str(new_packet), connection_to_victim), False)
 
-       # reset packet
-       elif new_packet.Htype == 3:
-           self.__print_data(str(new_packet), True)
-           self.__print_data(self.__send_data(self.__get_reset_packet(), connection_to_victim), False)
-
        # set_configuration packet
        elif new_packet.Htype == 6:
            self.__print_data(str(new_packet), True)
@@ -367,6 +362,7 @@ class usb_emulator:
             print "ERROR:\t" + msg
 
     def __connect_to_server(self):
+        return self.unix_socket
         num_of_tries = 0
         connection_to_victim = None
         while True:
