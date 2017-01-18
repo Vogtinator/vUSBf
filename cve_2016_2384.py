@@ -2,6 +2,7 @@ from usbscapy import *
 from usbEmulator import usb_emulator
 from usb_device import USBDevice
 from lsusb_descriptor_parser import lsusbDescriptionParser
+import socket
 
 interface = USBInterfaceDescriptor(
         bInterfaceNumber       = 0,
@@ -30,7 +31,14 @@ usbDevDescriptor = USBDeviceDescriptor(
 
 usbDev = USBDevice(usbDevDescriptor)
 
-emu = usb_emulator(["127.0.0.1", 1235], 0)
+# create an INET, STREAMing socket
+serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# bind the socket to a public host, and a well-known port
+serversocket.bind(("10.160.67.51", 1024))
+# become a server socket
+serversocket.listen(5)
+
+emu = usb_emulator(serversocket.accept()[0], 1)
 emu.connect_device(usbDev)
 
 data = lsusbDescriptionParser("dev_desc/multi_flash.txt").parse()
