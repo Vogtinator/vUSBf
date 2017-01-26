@@ -14,7 +14,7 @@ from emulator.hid import hid
 from fuzzer import fuzzer
 from lsusb_description_parser import LinuxLSUSBDescriptionParser
 from usb_parser import *
-
+import socket
 
 class USBEmulator(object):
     port = 0
@@ -86,7 +86,7 @@ class USBEmulator(object):
         return r_value
 
     def __get_hello_packet(self):
-        pkt = usbredirheader_32()
+        pkt = usbredirheader()
         pkt.Htype = 0
         pkt.HLength = 68
         pkt.Hid = 0
@@ -136,30 +136,23 @@ class USBEmulator(object):
     def __connection_loop(self, connection_to_victim):
 
         connection_to_victim.settimeout(config.CONNECTION_TO_VICTIM_TIMEOUT)
-        try:
-            # Receive the hello packet from the emulator
-            hello_packet = self.__recv_data(80, connection_to_victim)
-            self.__print_data(hello_packet, True)
-            self.__print_data(self.__send_data(self.__get_hello_packet(), connection_to_victim), False)
-            self.__print_data(self.__send_data(self.__get_if_info_packet(), connection_to_victim), False)
-            self.__print_data(self.__send_data(self.__get_ep_info_packet(), connection_to_victim), False)
-            self.__print_data(self.__send_data(self.__get_connect_packet(), connection_to_victim), False)
 
-        except Exception:
-            return False
+        # Receive the hello packet from the emulator
+        hello_packet = self.__recv_data(80, connection_to_victim)
+        self.__print_data(hello_packet, True)
+        self.__print_data(self.__send_data(self.__get_hello_packet(), connection_to_victim), False)
+        self.__print_data(self.__send_data(self.__get_if_info_packet(), connection_to_victim), False)
+        self.__print_data(self.__send_data(self.__get_ep_info_packet(), connection_to_victim), False)
+        self.__print_data(self.__send_data(self.__get_connect_packet(), connection_to_victim), False)
 
         for _ in range(config.MAX_PACKETS):
-            try:
-                received_data = self.__recv_data(16, connection_to_victim)
-                new_packet = usbredirheader(received_data)
-                if new_packet.Htype == -1:
-                    return True
-                raw_data = self.__recv_data_dont_print(new_packet.HLength, connection_to_victim)
-                raw_data = str(new_packet) + raw_data
-                new_packet = USBRedirParser(raw_data).get_scapy_packet()
-
-            except Exception:
+            received_data = self.__recv_data(12, connection_to_victim)
+            new_packet = usbredirheader(received_data)
+            if new_packet.Htype == -1:
                 return True
+            raw_data = self.__recv_data_dont_print(new_packet.HLength, connection_to_victim)
+            raw_data = str(new_packet) + raw_data
+            new_packet = USBRedirParser(raw_data).get_scapy_packet()
 
             # hello packet
             if new_packet.Htype == 0:
@@ -170,6 +163,10 @@ class USBEmulator(object):
             elif new_packet.Htype == 3:
                 self.__print_data(str(new_packet), True)
                 # self.__print_data(self.__send_data(self.__get_reset_packet(), connection_to_victim), False)
+
+            # get_configuration packet
+            elif new_packet.Htype == 7:
+                self.__print_data(str(new_packet), True)
 
             # set_configuration packet
             elif new_packet.Htype == 6:
@@ -217,7 +214,8 @@ class USBEmulator(object):
                 self.__send_data(str(new_packet) + str(interrupt_payload), connection_to_victim)
 
             else:
-                return True
+                self.__print_data(str(new_packet), True)
+                Raw(raw_data).show()
 
         return True
 
@@ -245,7 +243,7 @@ class USBEmulator(object):
         try:
             data = connection_to_victim.recv(length)
             if len(data) != length:
-                print "We received an amount of data we didn't expect"
+                print "We received an amount of data we didn't expect (" + str(length) + " vs " + str(len(data)) + ")"
             return data
         except Exception as e:
             print e.message + " during receiving data"
@@ -272,26 +270,7 @@ class USBEmulator(object):
             print("ERROR:\t{}".format(msg))
 
     def __connect_to_server(self):
-        num_of_tries = 0
-        connection_to_victim = None
-        while True:
-            try:
-                if self.unix_socket == "":
-                    print("Connecting to victim using TCP socket {}: {}".format(self.ip, self.port))
-                    connection_to_victim = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    connection_to_victim.settimeout(config.TCP_SOCKET_TIMEOUT)
-                    connection_to_victim.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                    connection_to_victim.connect((self.ip, self.port))
-                else:
-                    print("Connecting to victim using UNIX socket {}".format(self.unix_socket))
-                    connection_to_victim = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-                    connection_to_victim.settimeout(config.UNIX_SOCKET_TIMEOUT)
-                    connection_to_victim.connect(self.unix_socket)
-                break
-            except socket.error as e:
-                print("ERROR:\t{}".format(e))
-                num_of_tries += 1
-                if config.NUMBER_OF_RECONNECTS == num_of_tries:
-                    time.sleep(config.TIME_BETWEEN_RECONNECTS)
-                    return None
-        return connection_to_victim
+        serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        serversocket.bind((self.ip, self.port))
+        serversocket.listen(5)
+        return serversocket.accept()[0]

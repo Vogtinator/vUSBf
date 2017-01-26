@@ -31,7 +31,7 @@ class USBRedirParser(Parser):
     def __init__(self, raw):
         if raw is None:
             raise Exception("illegal redirData")
-        if len(raw) < 16:
+        if len(raw) < 12:
             raise Exception("illegal redirData")
 
         Parser.__init__(self, raw)
@@ -63,27 +63,27 @@ class USBRedirParser(Parser):
 
     @staticmethod
     def __parse_raw(raw):
-        header_layer = usbredirheader(raw[0:16])
+        header_layer = usbredirheader(raw[0:12])
 
         Htype = header_layer.Htype
         HLength = header_layer.HLength
 
-        if len(raw) == 16:
+        if len(raw) == 12:
             return header_layer
 
         specific_layer = None
 
         for layer in redir_specific_type:
-            if Htype == layer[0]:
+            if Htype == layer:
                 try:
-                    specific_layer = layer[1](raw[16:HLength + 16])
+                    specific_layer = redir_specific_type[layer](raw[12:HLength + 12])
                 except Exception:
                     pass
                 break
 
         # UNKNOWN SPECIFIC REDIR HEADER
         if specific_layer is None:
-            specific_layer = Raw(raw[16:HLength + 16])
+            specific_layer = Raw(raw[12:HLength + 12])
             header_layer = header_layer / specific_layer
 
         # CONTROL DATA REDIR HEADER
@@ -110,7 +110,7 @@ class USBRedirParser(Parser):
             specific_layer[Raw] = None
             header_layer = header_layer / specific_layer / raw_layer
 
-        raw = raw[HLength + 16:]
+        raw = raw[HLength + 12:]
         if raw != "":
             header_layer = header_layer / Raw(raw)
         return header_layer
