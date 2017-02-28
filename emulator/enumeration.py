@@ -72,12 +72,15 @@ class enumeration(emulator):
 
         # string descriptor
         elif descriptor_request == 0x03:
+            if descriptor_num > len(self.string_descriptor):
+                print "Invalid string queried"
+                descriptor_num = 1
+
             if descriptor_num == 0:
                 extra_payload = USBStringDescriptor('\x04\x03\x09\x04')
-            elif descriptor_num < len(self.string_descriptor) + 1:
-                extra_payload = self.string_descriptor[descriptor_num - 1]
             else:
-                print "Invalid string queried"
+                extra_payload = self.string_descriptor[descriptor_num - 1]
+
             packet_length = len(str(extra_payload))
             #extra_payload.show()
 

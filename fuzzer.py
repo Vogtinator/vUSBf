@@ -61,6 +61,7 @@ class fuzzer(object):
                             setattr(tmp, test_elements[i].get_field(), test_elements[i].get_value())
 
                 i += 1
+                return tmp
             except:
                 pass
             tmp = tmp.payload

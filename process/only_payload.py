@@ -35,15 +35,16 @@ def only_payload_process(host, port, exec_name, exec_list, exec_path, testcase_p
     xml_tree.calc_tests(exec_name)
 
     print "[*] Number of tests: " + str(xml_tree.get_number_of_elements())
-    xml_tree.print_tree()
+    #xml_tree.print_tree()
     emu = USBEmulator([host, port], 0)
     payloads = xml_tree.get_data_chunk(config.NUMBER_OF_JOBS_PER_PROCESS_NM)
     random.shuffle(payloads)
     while payloads is not None:
         for e in payloads:
-            print e
+            #print e
             emu.setup_payload(e)
             emu.execute()
-            time.sleep(config.SLEEP_BETWEEN_TESTS)
+            #time.sleep(config.SLEEP_BETWEEN_TESTS)
+            return
         payloads = xml_tree.get_data_chunk(config.NUMBER_OF_JOBS_PER_PROCESS_NM)
     print "[*] Done..."
