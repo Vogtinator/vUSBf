@@ -44,6 +44,7 @@ TC_T_NAME = "name"
 class xml_parser(object):
 
 	def __init__(self, path_test, path_testcase, path_exec):
+                self.number_of_elements = 0
 		self.test_root = self.__get_root(path_test)
 		self.testcase_root = self.__get_root(path_testcase)
 		self.exec_root = self.__get_root(path_exec)

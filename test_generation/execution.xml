@@ -1,5 +1,10 @@
 <execution>
 
+        <execute name="simple">
+                <testcase name="testcase_4"/>
+                <option emulator="enumeration" descriptor="multi_flash"/>
+        </execute>
+
         <execute name="ex1">
                 <testcase name="testcase_1"/>
                 <option emulator="enumeration" descriptor="desc9.txt"/>

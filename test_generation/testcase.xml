@@ -60,7 +60,11 @@
                                 <test name="all_product_ids"/>
                                 <test name="all_vendor_ids"/>
                         </testunit>
-			<test name="all_class_ids"/>
+
+			<testunit type="linked">
+				<test name="all_class_ids1"/>
+				<test name="all_class_ids2"/>
+			</testunit>			
                 </testunit>
         </testcase>
 </testcases>
